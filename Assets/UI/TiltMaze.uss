@@ -1,0 +1,179 @@
+.shell {
+    flex-grow: 1;
+    color: #f1f6f5;
+}
+.hidden { display: none; }
+.eyebrow {
+    font-size: 13px;
+    -unity-font-style: bold;
+    margin: 0;
+}
+.accent { color: #75f1c0; }
+.muted { color: #9bb5bd; }
+.menu {
+    position: absolute;
+    left: 38px;
+    top: 50%;
+    translate: 0 -50%;
+    width: 365px;
+    padding: 29px;
+    background-color: rgba(10, 23, 32, 0.97);
+    border-left-color: #75f1c0;
+    border-left-width: 3px;
+    border-radius: 12px;
+}
+.game-title {
+    font-size: 67px;
+    -unity-font-style: bold;
+    margin: 4px 0 5px 0;
+}
+.description {
+    font-size: 18px;
+    color: #c0d2d5;
+    white-space: normal;
+    margin: 0 0 16px 0;
+}
+.rule {
+    height: 1px;
+    background-color: #34505c;
+    margin: 7px 0 17px 0;
+}
+.level-name {
+    font-size: 21px;
+    -unity-font-style: bold;
+    margin: 0 0 5px 0;
+}
+.hint {
+    color: #b7cbd0;
+    font-size: 14px;
+    margin: 0;
+}
+.action, .compact {
+    -unity-font-style: bold;
+    margin: 0;
+    border-width: 0;
+    border-radius: 6px;
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+.action {
+    min-height: 46px;
+    font-size: 17px;
+    margin-top: 8px;
+}
+.menu .primary { margin-top: 23px; }
+.primary { background-color: #75f1c0; color: #0b211c; }
+.primary:hover, .primary:focus { background-color: #a8ffdb; }
+.secondary, .compact { background-color: #213742; color: #f1f6f5; }
+.secondary:hover, .secondary:focus, .compact:hover, .compact:focus { background-color: #345260; }
+.compact {
+    min-height: 34px;
+    padding: 6px 13px;
+    font-size: 14px;
+}
+.legend {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 21px;
+}
+.legend-item {
+    font-size: 13px;
+    -unity-font-style: bold;
+    margin: 0;
+    padding: 4px 7px;
+    border-radius: 3px;
+    background-color: #1b2d38;
+}
+.ice { color: #9fe9f5; }
+.water { color: #80c4ff; }
+.wet { color: #d2b2ff; }
+.trap { color: #ff9c87; }
+.hud, .scrim {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+.card {
+    background-color: rgba(10, 23, 32, 0.94);
+    border-width: 1px;
+    border-color: #314b58;
+    border-radius: 9px;
+}
+.run-card, .time-card, .commands, .skills, .diagnostics {
+    position: absolute;
+}
+.run-card {
+    left: 22px;
+    top: 21px;
+    min-width: 218px;
+    padding: 13px 15px;
+}
+.durability-row { flex-direction: row; justify-content: space-between; align-items: center; }
+.value { font-size: 15px; -unity-font-style: bold; margin: 0; }
+.meter {
+    height: 5px;
+    border-radius: 3px;
+    background-color: #283e49;
+    margin-top: 7px;
+    overflow: hidden;
+}
+.meter-fill { height: 100%; width: 100%; background-color: #75f1c0; }
+.meter-fill.low { background-color: #ff896c; }
+.time-card {
+    top: 21px;
+    right: 22px;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 12px;
+}
+.time-readout { min-width: 86px; margin-right: 14px; }
+.clock { font-size: 24px; -unity-font-style: bold; margin: 0; }
+.commands {
+    bottom: 21px;
+    left: 22px;
+    padding: 9px 12px;
+}
+.surface { color: #75f1c0; font-size: 13px; margin: 4px 0 0 0; }
+.skills {
+    bottom: 21px;
+    left: 50%;
+    translate: -50% 0;
+    flex-direction: row;
+}
+.skill { padding: 8px 13px; min-width: 110px; margin: 0 4px; }
+.skill .value { margin-top: 4px; color: #75f1c0; }
+.diagnostics { bottom: 21px; right: 22px; align-items: flex-end; }
+.debug-card { width: 222px; padding: 12px; margin-bottom: 7px; }
+.debug-text { font-size: 14px; margin: 5px 0 0 0; color: #bfd6da; white-space: normal; }
+.debug-toggle { font-size: 13px; }
+.ready {
+    position: absolute;
+    align-self: center;
+    top: 14%;
+    padding: 8px 17px;
+    font-size: 22px;
+    -unity-font-style: bold;
+    border-radius: 6px;
+    background-color: #75f1c0;
+    color: #0b211c;
+}
+.scrim {
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(3, 11, 16, 0.63);
+}
+.result { width: 366px; padding: 24px; }
+.result-title {
+    font-size: 44px;
+    -unity-font-style: bold;
+    margin: 6px 0 6px 0;
+}
+.result .description { margin-bottom: 10px; }
+.narrow .menu { left: 50%; translate: -50% -50%; width: 330px; }
+.narrow .skills { left: 22px; bottom: 85px; translate: 0 0; }
+.narrow .skill { margin: 0 8px 0 0; }
+.narrow .commands { bottom: 16px; }
+.narrow .diagnostics { bottom: 16px; }
+.narrow .debug-toggle { min-width: 36px; }

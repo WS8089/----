@@ -1,0 +1,79 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="TiltMaze.uss" />
+    <ui:VisualElement name="shell" class="shell" picking-mode="Ignore">
+        <ui:VisualElement name="menu" class="menu">
+            <ui:Label text="BEARPI" class="eyebrow accent" />
+            <ui:Label text="Tilt Maze" class="game-title" />
+            <ui:Label text="Tilt the board and guide the ball to the mint-green goal." class="description" />
+            <ui:VisualElement class="rule" />
+            <ui:Label name="menu-level" class="level-name" />
+            <ui:Label name="menu-controls" class="hint" />
+            <ui:Button name="start" text="Start game" class="action primary" />
+            <ui:Button name="exit" text="Quit" class="action secondary" />
+            <ui:VisualElement class="legend">
+                <ui:Label text="Ice" class="legend-item ice" />
+                <ui:Label text="Water" class="legend-item water" />
+                <ui:Label text="Wet" class="legend-item wet" />
+                <ui:Label text="Trap" class="legend-item trap" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="hud" class="hud hidden" picking-mode="Ignore">
+            <ui:VisualElement class="run-card card" picking-mode="Ignore">
+                <ui:Label name="hud-level" class="level-name" />
+                <ui:VisualElement class="durability-row" picking-mode="Ignore">
+                    <ui:Label text="DURABILITY" class="eyebrow muted" />
+                    <ui:Label name="durability" class="value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="meter" picking-mode="Ignore">
+                    <ui:VisualElement name="durability-fill" class="meter-fill" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="time-card card" picking-mode="Ignore">
+                <ui:VisualElement class="time-readout" picking-mode="Ignore">
+                    <ui:Label name="time" class="clock" />
+                    <ui:Label name="camera" class="hint" />
+                </ui:VisualElement>
+                <ui:Button name="pause" text="Pause" class="compact" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="commands card" picking-mode="Ignore">
+                <ui:Label name="controls" class="hint" />
+                <ui:Label name="surface" class="surface" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="skills" picking-mode="Ignore">
+                <ui:VisualElement class="skill card" picking-mode="Ignore">
+                    <ui:Label name="brake-label" class="eyebrow muted" />
+                    <ui:Label name="brake" class="value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="skill card" picking-mode="Ignore">
+                    <ui:Label name="shield-label" class="eyebrow muted" />
+                    <ui:Label name="shield" class="value" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="diagnostics" picking-mode="Ignore">
+                <ui:VisualElement name="debug-card" class="debug-card card hidden" picking-mode="Ignore">
+                    <ui:Label text="INPUT DIAGNOSTICS" class="eyebrow accent" />
+                    <ui:Label name="debug" class="debug-text" />
+                </ui:VisualElement>
+                <ui:Button name="debug-toggle" text="Input diagnostics" class="compact debug-toggle" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:Label name="ready" text="Get ready" class="ready hidden" picking-mode="Ignore" />
+
+        <ui:VisualElement name="scrim" class="scrim hidden">
+            <ui:VisualElement class="result card">
+                <ui:Label name="result-level" class="eyebrow accent" />
+                <ui:Label name="result-title" class="result-title" />
+                <ui:Label name="result-details" class="description" />
+                <ui:Button name="resume" text="Resume" class="action primary" />
+                <ui:Button name="retry" text="Retry" class="action primary" />
+                <ui:Button name="menu-back" text="Main menu" class="action secondary" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
