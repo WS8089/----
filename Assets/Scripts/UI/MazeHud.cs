@@ -25,6 +25,9 @@ namespace BearPi.TiltMaze
         private Label brakeLabel;
         private Label shieldLabel;
         private Label debugLabel;
+        private Button keyboardButton;
+        private Button motionButton;
+        private Label inputStatus;
         private float nextRefresh;
 
         private void Start()
@@ -39,6 +42,9 @@ namespace BearPi.TiltMaze
             brakeLabel = shell.Q<Label>("brake");
             shieldLabel = shell.Q<Label>("shield");
             debugLabel = shell.Q<Label>("debug");
+            keyboardButton = shell.Q<Button>("input-keyboard");
+            motionButton = shell.Q<Button>("input-motion");
+            inputStatus = shell.Q<Label>("input-status");
             shell.Q<Label>("controls").text =
                 $"{bindings.MoveKeys}  Tilt   ·   {bindings.CameraKey}  View   ·   {bindings.CalibrateKey}  Center";
             shell.Q<Label>("menu-controls").text = $"{bindings.MoveKeys}  Tilt   ·   {bindings.CameraKey}  Change view";
@@ -52,6 +58,9 @@ namespace BearPi.TiltMaze
             shell.Q<Button>("retry").clicked += Retry;
             shell.Q<Button>("menu-back").clicked += game.ReturnToMenu;
             shell.Q<Button>("debug-toggle").clicked += ToggleDiagnostics;
+            keyboardButton.clicked += OnKeyboardClicked;
+            motionButton.clicked += OnMotionClicked;
+            game.InputModeChanged += OnInputModeChanged;
             shell.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             game.StateChanged += ShowState;
             damage.DurabilityChanged += ShowDurability;
@@ -61,8 +70,71 @@ namespace BearPi.TiltMaze
 
         private void OnDestroy()
         {
-            if (game != null) game.StateChanged -= ShowState;
+            if (game != null)
+            {
+                game.StateChanged -= ShowState;
+                game.InputModeChanged -= OnInputModeChanged;
+            }
             if (damage != null) damage.DurabilityChanged -= ShowDurability;
+        }
+
+        private void OnKeyboardClicked()
+        {
+            if (!game.SetInputMode(InputMode.Keyboard) && inputStatus != null)
+            {
+                inputStatus.text = "Keyboard source missing";
+            }
+        }
+
+        private void OnMotionClicked()
+        {
+            if (!game.SetInputMode(InputMode.Motion) && inputStatus != null)
+            {
+                inputStatus.text = "UDP source missing";
+            }
+        }
+
+        private void OnInputModeChanged(InputMode mode) => RefreshInputMode();
+
+        private void RefreshInputMode()
+        {
+            if (keyboardButton == null || motionButton == null || inputStatus == null)
+            {
+                return;
+            }
+
+            bool keyboard = game.CurrentInputMode == InputMode.Keyboard;
+            keyboardButton.EnableInClassList("selected", keyboard);
+            motionButton.EnableInClassList("selected", !keyboard);
+
+            shell.Q<Label>("controls").text = keyboard
+                ? $"{bindings.MoveKeys}  Tilt   ·   {bindings.CameraKey}  View   ·   {bindings.CalibrateKey}  Center"
+                : $"Tilt board  ·   {bindings.CameraKey}  View   ·   {bindings.CalibrateKey}  Center";
+            shell.Q<Label>("menu-controls").text = keyboard
+                ? $"{bindings.MoveKeys}  Tilt   ·   {bindings.CameraKey}  Change view"
+                : "Tilt the BearPi board to steer";
+
+            if (keyboard)
+            {
+                inputStatus.text = $"{bindings.MoveKeys}  Tilt   ·   {bindings.CalibrateKey}  Center";
+                return;
+            }
+
+            UdpInputSource udp = game.UdpSource;
+            if (udp == null)
+            {
+                inputStatus.text = "UDP source missing";
+                return;
+            }
+            if (!string.IsNullOrEmpty(udp.LastError))
+            {
+                inputStatus.text = $"UDP error: {udp.LastError}";
+                return;
+            }
+
+            inputStatus.text = udp.IsConnected
+                ? $"Board connected  ·  {udp.Packets} packets"
+                : "Waiting for board...";
         }
 
         private void OnGeometryChanged(GeometryChangedEvent change)
@@ -145,6 +217,7 @@ namespace BearPi.TiltMaze
 
         private void Refresh()
         {
+            RefreshInputMode();
             elapsed.text = FormatTime(game.Elapsed);
             cameraLabel.text = cameras.Mode.ToString();
             terrainLabel.text = terrain.Current switch

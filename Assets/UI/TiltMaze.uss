@@ -177,3 +177,26 @@
 .narrow .commands { bottom: 16px; }
 .narrow .diagnostics { bottom: 16px; }
 .narrow .debug-toggle { min-width: 36px; }
+
+.input-picker { margin-top: 16px; }
+.input-row { flex-direction: row; margin-top: 7px; }
+.mode-button {
+    flex-grow: 1;
+    min-height: 40px;
+    margin: 0;
+    font-size: 15px;
+    -unity-font-style: bold;
+    border-width: 1px;
+    border-color: #314b58;
+    border-radius: 6px;
+    background-color: #162832;
+    color: #b7cbd0;
+}
+.mode-button:hover, .mode-button:focus { background-color: #213742; }
+.mode-button.selected {
+    background-color: #75f1c0;
+    color: #0b211c;
+    border-color: #75f1c0;
+}
+.mode-button.gap { margin-left: 8px; }
+.input-status { margin-top: 7px; font-size: 13px; }

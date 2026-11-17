@@ -8,6 +8,14 @@
             <ui:VisualElement class="rule" />
             <ui:Label name="menu-level" class="level-name" />
             <ui:Label name="menu-controls" class="hint" />
+            <ui:VisualElement class="input-picker">
+                <ui:Label text="INPUT" class="eyebrow muted" />
+                <ui:VisualElement class="input-row">
+                    <ui:Button name="input-keyboard" text="Keyboard" class="mode-button" />
+                    <ui:Button name="input-motion" text="Motion (UDP)" class="mode-button gap" />
+                </ui:VisualElement>
+                <ui:Label name="input-status" text="WASD to tilt" class="hint input-status" />
+            </ui:VisualElement>
             <ui:Button name="start" text="Start game" class="action primary" />
             <ui:Button name="exit" text="Quit" class="action secondary" />
             <ui:VisualElement class="legend">

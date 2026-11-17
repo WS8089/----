@@ -4,6 +4,8 @@ namespace BearPi.TiltMaze
 {
     public enum ConnectionStatus { Disconnected, Connected, Simulated }
 
+    public enum InputMode { Keyboard, Motion }
+
     [Flags]
     public enum Gesture { None = 0, Brake = 1, Shield = 2 }
 
