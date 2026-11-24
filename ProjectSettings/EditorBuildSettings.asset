@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/TiltMazeDuel.unity
+    guid: 261260043ea37d448a5be74feae36bfc
+  - enabled: 1
     path: Assets/Scenes/TiltMaze.unity
     guid: cc5114c59d4acd14da7ebf7a5ab5e634
   m_configObjects: {}

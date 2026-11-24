@@ -72,6 +72,8 @@ namespace BearPi.TiltMaze
             shell.Q<Button>("retry").clicked += Retry;
             shell.Q<Button>("menu-back").clicked += game.ReturnToMenu;
             shell.Q<Button>("debug-toggle").clicked += ToggleDiagnostics;
+            shell.Q<Button>("game-mode").clicked += () => game.SetDuelEnabled(!game.DuelEnabled);
+            shell.Q<Button>("swap-roles").clicked += game.SwapRolesAndRetry;
             keyboardButton.clicked += OnKeyboardClicked;
             motionButton.clicked += OnMotionClicked;
             game.InputModeChanged += OnInputModeChanged;
@@ -118,6 +120,13 @@ namespace BearPi.TiltMaze
             }
 
             bool keyboard = game.CurrentInputMode == InputMode.Keyboard;
+            bool duel = game.DuelEnabled;
+            shell.Q<Label>("timer-caption").text = duel ? "TIME LEFT" : "TIME";
+            motionButton.SetEnabled(!duel);
+            shell.Q<Button>("game-mode").text = duel ? "Mode: Keyboard duel" : "Mode: Solo tilt";
+            shell.Q<Label>("menu-description").text = duel
+                ? $"Ball vs maze. Reach the goal in {game.RoundDuration:0} seconds. The maze wins if time or durability runs out, or the ball falls."
+                : "Tilt the board and guide the ball to the mint-green goal.";
             keyboardButton.EnableInClassList("selected", keyboard);
             motionButton.EnableInClassList("selected", !keyboard);
 
@@ -127,6 +136,16 @@ namespace BearPi.TiltMaze
             shell.Q<Label>("menu-controls").text = keyboard
                 ? $"{bindings.MoveKeys}  Tilt   ·   {bindings.CameraKey}  Change view"
                 : "Tilt the BearPi board to steer";
+
+            if (duel)
+            {
+                string roles = $"Ball: {bindings.BallKeys}   /   Maze: {bindings.TiltKeys}";
+                shell.Q<Label>("menu-controls").text = roles;
+                shell.Q<Label>("controls").text = $"Ball {bindings.BallKeys}  ·  Maze {bindings.TiltKeys}";
+                shell.Q<Label>("duel-roles").text = "Ball reaches goal  /  Maze stops ball";
+                inputStatus.text = $"Ball skills: {bindings.BrakeKey} brake / {bindings.ShieldKey} shield";
+                return;
+            }
 
             if (keyboard)
             {
@@ -236,8 +255,12 @@ namespace BearPi.TiltMaze
 
             if (state == GameState.MainMenu)
             {
-                AddNav("input-keyboard", () => game.SetInputMode(InputMode.Keyboard));
-                AddNav("input-motion", () => game.SetInputMode(InputMode.Motion));
+                AddNav("game-mode", () => game.SetDuelEnabled(!game.DuelEnabled));
+                if (!game.DuelEnabled)
+                {
+                    AddNav("input-keyboard", () => game.SetInputMode(InputMode.Keyboard));
+                    AddNav("input-motion", () => game.SetInputMode(InputMode.Motion));
+                }
                 AddNav("start", game.StartGame);
                 AddNav("exit", game.Quit);
             }
@@ -250,6 +273,7 @@ namespace BearPi.TiltMaze
             else if (state is GameState.Completed or GameState.Failed)
             {
                 AddNav("retry", Retry);
+                if (game.DuelEnabled) AddNav("swap-roles", game.SwapRolesAndRetry);
                 AddNav("menu-back", game.ReturnToMenu);
             }
 
@@ -336,9 +360,13 @@ namespace BearPi.TiltMaze
             Visible("hud", !menu);
             Visible("pause", state == GameState.Playing);
             Visible("ready", state == GameState.Ready);
+            Visible("duel-roles", game.DuelEnabled);
+            Visible("swap-roles", game.DuelEnabled && (state is GameState.Failed or GameState.Completed));
+            Visible("input-picker", !game.DuelEnabled);
             Visible("scrim", result);
             shell.Q<Label>("menu-level").text = level;
-            shell.Q<Label>("hud-level").text = level;
+            shell.Q<Label>("hud-level").text = game.DuelEnabled ? "BALL vs MAZE" : level;
+            shell.Q<Label>("ready").text = game.DuelEnabled ? "Both players ready?" : "Get ready";
 
             if (result)
             {
@@ -346,6 +374,8 @@ namespace BearPi.TiltMaze
                 shell.Q<Label>("result-title").text = state switch
                 {
                     GameState.Paused => "Paused",
+                    GameState.Completed when game.DuelEnabled => "Ball wins",
+                    GameState.Failed when game.DuelEnabled => "Maze wins",
                     GameState.Completed => "Maze cleared",
                     _ => "Run ended"
                 };
@@ -353,6 +383,7 @@ namespace BearPi.TiltMaze
                 {
                     GameState.Completed => $"{FormatTime(game.Elapsed)}   ·   {damage.Durability:0} durability left",
                     GameState.Failed when game.Failure == FailureReason.FellOffBoard => "The ball fell off the platform.",
+                    GameState.Failed when game.Failure == FailureReason.TimeExpired => "Time is up. The maze held the ball back.",
                     GameState.Failed => "The ball ran out of durability.",
                     _ => $"{FormatTime(game.Elapsed)}   ·   {damage.Durability:0} durability left"
                 };
@@ -392,7 +423,7 @@ namespace BearPi.TiltMaze
         private void Refresh()
         {
             RefreshInputMode();
-            elapsed.text = FormatTime(game.Elapsed);
+            elapsed.text = FormatTime(game.DuelEnabled ? game.TimeRemaining : game.Elapsed);
             cameraLabel.text = cameras.Mode.ToString();
             terrainLabel.text = terrain.Current switch
             {
@@ -409,6 +440,7 @@ namespace BearPi.TiltMaze
             var angles = levels.Current.Tilt.CurrentAngles;
             debugLabel.text = $"{sample.ConnectionStatus}\nRoll  {sample.Roll:+0.0;-0.0;0.0}°  ·  Pitch  {sample.Pitch:+0.0;-0.0;0.0}°" +
                 $"\nPlatform X  {angles.y:+0.0;-0.0;0.0}°  /  Z  {-angles.x:+0.0;-0.0;0.0}°";
+            if (game.DuelEnabled) debugLabel.text += $"\nBall input {sample.BallMovement.x:0.0}, {sample.BallMovement.y:0.0}";
         }
 
         private static string SkillStatus(float active, float recharge)

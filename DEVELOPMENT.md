@@ -53,3 +53,20 @@ $p.ExitCode
 
 人工复测可依照 README 通关路线开始一局。打开诊断面板观察 WASD 和 R 响应，按 V 循环三个视角，测试两种技能和冷却。沿出生点右侧长廊滚出断崖，检查失败原因和重试。成功抵达终点后，检查用时、剩余耐久和重试按钮。
 
+## 5 · 双人键盘对抗试验 · 2026-11-24
+
+本地 main 先快进到组员最新合并提交 b7910d7，包含 fde0201 的开发板 UI 导航、确认和返回支持。工程当前版本为 6000.6.9f1。
+
+- 新增 `Assets/Scenes/TiltMazeDuel.unity`、`Assets/Scripts/Physics/BallDriveController.cs`、`Assets/Editor/DuelSceneSetup.cs` 和 `Assets/Editor/DuelSmoke.cs`，以及对应 meta 文件。
+- 修改 `GameManager.cs`、`GameState.cs`、`MazeInput.cs`、`KeyboardInputSource.cs`、`MockInputSource.cs`、`MazeHud.cs`、UI 的 UXML/USS、`EditorBuildSettings.asset` 和 README。
+- 双方分别输入平台姿态和小球移动方向。移动通过 FixedUpdate 中的 AddForce 实现。GameManager 管理 90 秒回合、超时失败及换边重试。默认 WASD 控球、方向键倾斜，技能为小球方服务。主菜单可切回单人模式。
+- 本轮采用独立回合判胜，交换按键后开始新回合。时限、驱动力和倾角可以在 Inspector 调整。实际两人对抗中的平衡和胜率需要试玩后调整。
+- 本机仅安装 6000.6.3f1，使用 Build/DuelValidation 隔离副本编译、生成场景和运行验证。工程版本文件保持组员提交的 6000.6.9f1。
+- 双人 Play Mode 自动回归退出码为 0。独立操控、暂停计时、超时、换边、坠落均通过，施加小幅反向倾斜时完整刚体路线用时 17.1 秒。原单人 Play Mode 回归同样退出码为 0，用时 22.6 秒、耐久 100。
+- Windows x64 构建成功。旧版编辑器仍记录 Editor Search 索引异常和组员菜单脚本的旧 API 警告，未出现 C# 编译错误。6000.6.9f1 上的编辑器验收和实际两人对抗平衡仍待验证。
+- Windows 试玩版已由用户实际操作并反馈运行正常，观察到 Ball wins 结算、用时、剩余耐久和换边入口。最终本机程序位于 `Build/TiltMazeDuelFinal/TiltMazeDuel.exe`，双人场景作为构建启动场景。最终构建整理了双人菜单的输入选项显示。
+
+自动回归可通过 `BearPi.TiltMaze.Editor.DuelSmoke.Run` 执行，覆盖独立操控、暂停冻结计时、超时、换边、坠落和完整刚体路线。原单人回归入口仍为 `BearPi.TiltMaze.Editor.TiltMazeSmoke.Run`。使用前面的 PowerShell 命令替换 executeMethod 即可运行，双人测试在完成后自行退出。
+
+人工试玩应由两个人同时操控。先让迷宫方保持水平确认小球能前进，再施加反向倾斜观察阻力，接着验证超时和双方胜利结算，换边后检查按键归属。后续工作按试玩结果决定地图长度、时限和双方控制强度。
+
