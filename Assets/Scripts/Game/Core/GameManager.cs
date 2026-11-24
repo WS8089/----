@@ -15,6 +15,10 @@ namespace BearPi.TiltMaze
         [SerializeField] private KeyboardInputSource keyboardInput;
         [SerializeField] private UdpInputSource udpInput;
         [SerializeField, Min(0f)] private float readyDuration = 0.8f;
+        [Header("Keyboard duel")]
+        [SerializeField] private bool duelEnabled;
+        [SerializeField, Min(1f)] private float roundDuration = 90f;
+        [SerializeField] private BallDriveController ballDrive;
 
         private IMazeInputSource input;
         private float readyRemaining;
@@ -28,11 +32,18 @@ namespace BearPi.TiltMaze
         public MazeInput LastInput { get; private set; }
         public InputMode CurrentInputMode { get; private set; }
         public UdpInputSource UdpSource => udpInput;
+        public bool DuelEnabled => duelEnabled;
+        public float TimeRemaining => Mathf.Max(0f, roundDuration - Elapsed);
+        public float RoundDuration => roundDuration;
 
         private void Start()
         {
             if (keyboardInput == null) keyboardInput = GetComponent<KeyboardInputSource>();
             if (udpInput == null) udpInput = GetComponent<UdpInputSource>();
+            if (ballDrive == null) ballDrive = levels.Ball.GetComponent<BallDriveController>();
+            if (ballDrive == null) ballDrive = levels.Ball.gameObject.AddComponent<BallDriveController>();
+            keyboardInput?.ConfigureDuel(duelEnabled);
+            if (duelEnabled && inputSource is not MockInputSource) inputSource = keyboardInput;
 
             input = (IMazeInputSource)inputSource;
             if (input == null) input = keyboardInput;
@@ -52,6 +63,7 @@ namespace BearPi.TiltMaze
         /// </summary>
         public bool SetInputMode(InputMode mode)
         {
+            if (duelEnabled && mode == InputMode.Motion) return false;
             if (mode == InputMode.Motion)
             {
                 if (udpInput == null) udpInput = GetComponent<UdpInputSource>();
@@ -72,6 +84,23 @@ namespace BearPi.TiltMaze
             Debug.Log($"[TiltMaze] input mode -> {mode}");
             InputModeChanged?.Invoke(mode);
             return true;
+        }
+
+        public void SetDuelEnabled(bool enabled)
+        {
+            if (State != GameState.MainMenu || (enabled && ballDrive == null)) return;
+            duelEnabled = enabled;
+            keyboardInput.ConfigureDuel(enabled);
+            if (enabled) SetInputMode(InputMode.Keyboard);
+            ballDrive?.StopDrive();
+            SetState(GameState.MainMenu);
+        }
+
+        public void SwapRolesAndRetry()
+        {
+            if (!duelEnabled || State is not (GameState.Failed or GameState.Completed)) return;
+            keyboardInput.SwapRoles();
+            Begin(levels.Index);
         }
 
         private void OnDestroy()
@@ -106,8 +135,15 @@ namespace BearPi.TiltMaze
             if (State != GameState.Playing) return;
 
             Elapsed += Time.deltaTime;
+            if (duelEnabled && TimeRemaining <= 0f)
+            {
+                Elapsed = roundDuration;
+                Fail(FailureReason.TimeExpired);
+                return;
+            }
             skills.Handle(LastInput.Gesture);
             var tilt = levels.Current.Tilt;
+            if (duelEnabled) ballDrive.SetDrive(LastInput.BallMovement, tilt.Body.rotation * Vector3.up);
             tilt.SetAttitude(LastInput);
             if ((LastInput.Button & MazeButton.Calibrate) != 0) tilt.Calibrate(LastInput);
             if ((LastInput.Button & MazeButton.Camera) != 0) cameras.Cycle();
@@ -137,6 +173,7 @@ namespace BearPi.TiltMaze
 
         public void ReturnToMenu()
         {
+            ballDrive?.StopDrive();
             levels.Select(0);
             skills.ResetSkills();
             damage.ResetDurability();
@@ -149,6 +186,7 @@ namespace BearPi.TiltMaze
 
         private void Begin(int index)
         {
+            ballDrive?.StopDrive();
             levels.Select(index);
             damage.ResetDurability();
             skills.ResetSkills();
@@ -176,6 +214,7 @@ namespace BearPi.TiltMaze
 
         private void StopRun(GameState outcome)
         {
+            ballDrive?.StopDrive();
             levels.Ball.SetActivePhysics(false);
             levels.Current.Tilt.AcceptingTilt = false;
             skills.StopSkills();
@@ -183,6 +222,8 @@ namespace BearPi.TiltMaze
             feedback.Publish(outcome == GameState.Completed ? FeedbackKind.Completed : FeedbackKind.Failed,
                 levels.Ball.Body.position);
         }
+
+        private void OnDisable() => ballDrive?.StopDrive();
 
         private void SetState(GameState next)
         {

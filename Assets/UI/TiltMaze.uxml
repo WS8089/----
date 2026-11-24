@@ -4,11 +4,12 @@
         <ui:VisualElement name="menu" class="menu">
             <ui:Label text="BEARPI" class="eyebrow accent" />
             <ui:Label text="Tilt Maze" class="game-title" />
-            <ui:Label text="Tilt the board and guide the ball to the mint-green goal." class="description" />
+            <ui:Label name="menu-description" text="Tilt the board and guide the ball to the mint-green goal." class="description" />
             <ui:VisualElement class="rule" />
             <ui:Label name="menu-level" class="level-name" />
             <ui:Label name="menu-controls" class="hint" />
-            <ui:VisualElement class="input-picker">
+            <ui:Button name="game-mode" text="Mode: Solo tilt" class="compact game-mode" />
+            <ui:VisualElement name="input-picker" class="input-picker">
                 <ui:Label text="INPUT" class="eyebrow muted" />
                 <ui:VisualElement class="input-row">
                     <ui:Button name="input-keyboard" text="Keyboard" class="mode-button" />
@@ -29,6 +30,7 @@
         <ui:VisualElement name="hud" class="hud hidden" picking-mode="Ignore">
             <ui:VisualElement class="run-card card" picking-mode="Ignore">
                 <ui:Label name="hud-level" class="level-name" />
+                <ui:Label name="duel-roles" class="hint hidden" />
                 <ui:VisualElement class="durability-row" picking-mode="Ignore">
                     <ui:Label text="DURABILITY" class="eyebrow muted" />
                     <ui:Label name="durability" class="value" />
@@ -40,6 +42,7 @@
 
             <ui:VisualElement class="time-card card" picking-mode="Ignore">
                 <ui:VisualElement class="time-readout" picking-mode="Ignore">
+                    <ui:Label name="timer-caption" text="TIME" class="eyebrow muted" />
                     <ui:Label name="time" class="clock" />
                     <ui:Label name="camera" class="hint" />
                 </ui:VisualElement>
@@ -80,6 +83,7 @@
                 <ui:Label name="result-details" class="description" />
                 <ui:Button name="resume" text="Resume" class="action primary" />
                 <ui:Button name="retry" text="Retry" class="action primary" />
+                <ui:Button name="swap-roles" text="Swap roles and play" class="action secondary hidden" />
                 <ui:Button name="menu-back" text="Main menu" class="action secondary" />
             </ui:VisualElement>
         </ui:VisualElement>

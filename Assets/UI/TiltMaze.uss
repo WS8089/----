@@ -200,6 +200,10 @@
 }
 .mode-button.gap { margin-left: 8px; }
 .input-status { margin-top: 7px; font-size: 13px; }
+.game-mode { margin-top: 12px; }
+#menu-controls, #controls { white-space: normal; }
+#duel-roles { margin-bottom: 7px; }
+.mode-button:disabled { opacity: 0.35; }
 
 .nav-selected {
     border-width: 2px;

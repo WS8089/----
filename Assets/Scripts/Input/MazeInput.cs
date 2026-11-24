@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace BearPi.TiltMaze
 {
@@ -28,15 +29,17 @@ namespace BearPi.TiltMaze
         public readonly Gesture Gesture;
         public readonly MazeButton Button;
         public readonly ConnectionStatus ConnectionStatus;
+        public readonly Vector2 BallMovement;
 
         public MazeInput(float roll, float pitch, Gesture gesture, MazeButton button,
-            ConnectionStatus connectionStatus)
+            ConnectionStatus connectionStatus, Vector2 ballMovement = default)
         {
             Roll = roll;
             Pitch = pitch;
             Gesture = gesture;
             Button = button;
             ConnectionStatus = connectionStatus;
+            BallMovement = Vector2.ClampMagnitude(ballMovement, 1f);
         }
     }
 

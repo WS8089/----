@@ -8,6 +8,9 @@ namespace BearPi.TiltMaze
         [SerializeField, Range(-45f, 45f)] private float pitch;
         private Gesture gestures;
         private MazeButton buttons;
+        private Vector2 movement;
+
+        public void SetMovement(Vector2 direction) => movement = Vector2.ClampMagnitude(direction, 1f);
 
         public void SetAttitude(float rollDegrees, float pitchDegrees)
         {
@@ -24,7 +27,7 @@ namespace BearPi.TiltMaze
 
         public MazeInput Read()
         {
-            var sample = new MazeInput(roll, pitch, gestures, buttons, ConnectionStatus.Simulated);
+            var sample = new MazeInput(roll, pitch, gestures, buttons, ConnectionStatus.Simulated, movement);
             gestures = Gesture.None;
             buttons = MazeButton.None;
             return sample;
