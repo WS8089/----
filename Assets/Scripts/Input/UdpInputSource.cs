@@ -10,9 +10,10 @@ namespace BearPi.TiltMaze
     /// <summary>
     /// Receives the BearPi board attitude over UDP.
     ///
-    /// Wire format (20 bytes, little-endian):
-    ///   uint32 seq, uint32 ms, int32 nx, int32 ny, int32 nz
-    /// where (nx, ny, nz) is the board normal multiplied by 10000.
+    /// Wire format (24 bytes, little-endian):
+    ///   uint32 seq, uint32 ms, int32 nx, int32 ny, int32 nz, uint32 buttons
+    /// where (nx, ny, nz) is the board normal multiplied by 10000 and
+    /// buttons bit0 = confirm (F1), bit1 = back (F2).
     ///
     /// The board normal is converted into the Roll/Pitch degrees expected by
     /// <see cref="MazeTiltController"/>. Roll positive rolls the ball right,
@@ -20,7 +21,7 @@ namespace BearPi.TiltMaze
     /// </summary>
     public sealed class UdpInputSource : MonoBehaviour, IMazeInputSource
     {
-        private const int PacketSize = 20;
+        private const int PacketSize = 24;
 
         [Header("UDP")]
         [SerializeField, Min(1)] private int port = 9999;
@@ -43,6 +44,8 @@ namespace BearPi.TiltMaze
         [SerializeField] private KeyCode cameraKey = KeyCode.V;
         [SerializeField] private KeyCode calibrateKey = KeyCode.R;
         [SerializeField] private KeyCode pauseKey = KeyCode.Escape;
+        [SerializeField] private KeyCode confirmKey = KeyCode.Return;
+        [SerializeField] private KeyCode backKey = KeyCode.Backspace;
 
         private readonly ConcurrentQueue<ImuFrame> pending = new ConcurrentQueue<ImuFrame>();
 
@@ -82,12 +85,14 @@ namespace BearPi.TiltMaze
             public readonly uint Seq;
             public readonly uint Ms;
             public readonly Vector3 Normal;
+            public readonly uint Buttons;
 
-            public ImuFrame(uint seq, uint ms, Vector3 normal)
+            public ImuFrame(uint seq, uint ms, Vector3 normal, uint buttons)
             {
                 Seq = seq;
                 Ms = ms;
                 Normal = normal;
+                Buttons = buttons;
             }
         }
 
@@ -140,6 +145,7 @@ namespace BearPi.TiltMaze
                     float nx = BitConverter.ToInt32(data, 8) / 10000f;
                     float ny = BitConverter.ToInt32(data, 12) / 10000f;
                     float nz = BitConverter.ToInt32(data, 16) / 10000f;
+                    uint frameButtons = BitConverter.ToUInt32(data, 20);
 
                     var normal = new Vector3(nx, ny, nz);
                     if (normal.sqrMagnitude < 0.25f)
@@ -155,7 +161,7 @@ namespace BearPi.TiltMaze
                     Interlocked.Exchange(ref lastSeq, seq);
                     Interlocked.Increment(ref packets);
 
-                    pending.Enqueue(new ImuFrame(seq, ms, normal.normalized));
+                    pending.Enqueue(new ImuFrame(seq, ms, normal.normalized, frameButtons));
                     while (pending.Count > 8)
                     {
                         pending.TryDequeue(out _);
@@ -198,11 +204,13 @@ namespace BearPi.TiltMaze
         {
             // Keep only the newest sample; MazeTiltController already smooths.
             bool updated = false;
+            uint frameButtons = 0;
             while (pending.TryDequeue(out ImuFrame frame))
             {
                 Apply(frame.Normal);
                 lastMs = frame.Ms;
                 lastNormal = frame.Normal;
+                frameButtons |= frame.Buttons;
                 lastPacketTime = Time.realtimeSinceStartupAsDouble;
                 hasSample = true;
                 updated = true;
@@ -227,11 +235,15 @@ namespace BearPi.TiltMaze
 
             Gesture gestures = Gesture.None;
             MazeButton buttons = MazeButton.None;
+            if ((frameButtons & 0x01u) != 0) buttons |= MazeButton.Confirm;
+            if ((frameButtons & 0x02u) != 0) buttons |= MazeButton.Back;
             if (Input.GetKeyDown(brakeKey)) gestures |= Gesture.Brake;
             if (Input.GetKeyDown(shieldKey)) gestures |= Gesture.Shield;
             if (Input.GetKeyDown(cameraKey)) buttons |= MazeButton.Camera;
             if (Input.GetKeyDown(calibrateKey)) buttons |= MazeButton.Calibrate;
             if (Input.GetKeyDown(pauseKey)) buttons |= MazeButton.Pause;
+            if (Input.GetKeyDown(confirmKey)) buttons |= MazeButton.Confirm;
+            if (Input.GetKeyDown(backKey)) buttons |= MazeButton.Back;
 
             return new MazeInput(
                 fresh ? roll : 0f,

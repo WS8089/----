@@ -200,3 +200,8 @@
 }
 .mode-button.gap { margin-left: 8px; }
 .input-status { margin-top: 7px; font-size: 13px; }
+
+.nav-selected {
+    border-width: 2px;
+    border-color: #ffffff;
+}

@@ -10,7 +10,15 @@ namespace BearPi.TiltMaze
     public enum Gesture { None = 0, Brake = 1, Shield = 2 }
 
     [Flags]
-    public enum MazeButton { None = 0, Camera = 1, Calibrate = 2, Pause = 4 }
+    public enum MazeButton
+    {
+        None = 0,
+        Camera = 1,
+        Calibrate = 2,
+        Pause = 4,
+        Confirm = 8,
+        Back = 16
+    }
 
     // Attitude in degrees. Events are consumed on the first read after arrival.
     public readonly struct MazeInput

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -14,6 +16,13 @@ namespace BearPi.TiltMaze
         [SerializeField] private BallDamageSystem damage;
         [SerializeField] private SkillManager skills;
         [SerializeField] private TerrainController terrain;
+        [Header("Menu tilt navigation")]
+        [SerializeField, Min(1f)] private float navTiltEnter = 10f;
+        [SerializeField, Min(0.5f)] private float navTiltRelease = 4f;
+        [SerializeField, Min(0.1f)] private float navRepeatDelay = 0.7f;
+        [SerializeField, Min(0.1f)] private float navRepeatInterval = 0.6f;
+        [Tooltip("Only flips menu navigation; gameplay tilt is unaffected.")]
+        [SerializeField] private bool navInvert = true;
 
         private VisualElement shell;
         private VisualElement debugCard;
@@ -29,6 +38,11 @@ namespace BearPi.TiltMaze
         private Button motionButton;
         private Label inputStatus;
         private float nextRefresh;
+
+        private readonly List<(Button button, Action action)> navItems = new();
+        private int navIndex;
+        private int navDir;
+        private float navHold;
 
         private void Start()
         {
@@ -137,6 +151,162 @@ namespace BearPi.TiltMaze
                 : "Waiting for board...";
         }
 
+        /// <summary>
+        /// Tilt up/down moves the highlight, F1 confirms, F2 goes back.
+        /// Active only outside Playing/Ready so it never fights the maze.
+        /// </summary>
+        private void HandleMenuNavigation()
+        {
+            if (game == null)
+            {
+                return;
+            }
+
+            if (game.State == GameState.Playing)
+            {
+                if ((game.LastInput.Button & MazeButton.Back) != 0)
+                {
+                    game.Pause();
+                }
+                return;
+            }
+
+            if (game.State == GameState.Ready || navItems.Count == 0)
+            {
+                return;
+            }
+
+            float pitch = game.LastInput.Pitch;
+            int direction = 0;
+            int sign = navInvert ? -1 : 1;
+
+            if (pitch > navTiltEnter)
+            {
+                direction = sign;
+            }
+            else if (pitch < -navTiltEnter)
+            {
+                direction = -sign;
+            }
+
+            if (direction == 0)
+            {
+                /* 回到中立区才允许下一次方向切换 */
+                if (Mathf.Abs(pitch) < navTiltRelease)
+                {
+                    navDir = 0;
+                    navHold = 0f;
+                }
+            }
+            else if (direction != navDir)
+            {
+                navDir = direction;
+                MoveSelection(direction);
+                navHold = navRepeatDelay;
+            }
+            else
+            {
+                /* 持续同一方向倾斜时，按固定间隔缓慢重复 */
+                navHold -= Time.unscaledDeltaTime;
+                if (navHold <= 0f)
+                {
+                    MoveSelection(direction);
+                    navHold = navRepeatInterval;
+                }
+            }
+
+            MazeButton buttons = game.LastInput.Button;
+            if ((buttons & MazeButton.Confirm) != 0)
+            {
+                ActivateSelection();
+            }
+            if ((buttons & MazeButton.Back) != 0)
+            {
+                BackOut();
+            }
+        }
+
+        private void RebuildNavigation(GameState state)
+        {
+            ClearNavigationHighlight();
+            navItems.Clear();
+            navIndex = 0;
+            navDir = 0;
+            navHold = 0f;
+
+            if (state == GameState.MainMenu)
+            {
+                AddNav("input-keyboard", () => game.SetInputMode(InputMode.Keyboard));
+                AddNav("input-motion", () => game.SetInputMode(InputMode.Motion));
+                AddNav("start", game.StartGame);
+                AddNav("exit", game.Quit);
+            }
+            else if (state == GameState.Paused)
+            {
+                AddNav("resume", game.Resume);
+                AddNav("retry", Retry);
+                AddNav("menu-back", game.ReturnToMenu);
+            }
+            else if (state is GameState.Completed or GameState.Failed)
+            {
+                AddNav("retry", Retry);
+                AddNav("menu-back", game.ReturnToMenu);
+            }
+
+            HighlightNavigation();
+        }
+
+        private void AddNav(string buttonName, Action action)
+        {
+            Button button = shell.Q<Button>(buttonName);
+            if (button != null)
+            {
+                navItems.Add((button, action));
+            }
+        }
+
+        private void MoveSelection(int direction)
+        {
+            navIndex = (navIndex + direction + navItems.Count) % navItems.Count;
+            HighlightNavigation();
+        }
+
+        private void ActivateSelection()
+        {
+            if (navIndex >= 0 && navIndex < navItems.Count)
+            {
+                navItems[navIndex].action?.Invoke();
+            }
+        }
+
+        private void BackOut()
+        {
+            if (game.State == GameState.MainMenu)
+            {
+                game.Quit();
+            }
+            else
+            {
+                game.ReturnToMenu();
+            }
+        }
+
+        private void HighlightNavigation()
+        {
+            for (int i = 0; i < navItems.Count; i++)
+            {
+                navItems[i].button.EnableInClassList("nav-selected", i == navIndex);
+            }
+        }
+
+        private void ClearNavigationHighlight()
+        {
+            foreach (Button button in shell.Query<Button>(className: "nav-selected").ToList())
+            {
+                button.RemoveFromClassList("nav-selected");
+            }
+        }
+
         private void OnGeometryChanged(GeometryChangedEvent change)
         {
             bool narrow = change.newRect.width < 830f;
@@ -196,6 +366,8 @@ namespace BearPi.TiltMaze
             }
 
             Refresh();
+
+            RebuildNavigation(state);
         }
 
         private void Visible(string name, bool visible) => shell.Q(name).EnableInClassList("hidden", !visible);
@@ -210,6 +382,8 @@ namespace BearPi.TiltMaze
 
         private void Update()
         {
+            HandleMenuNavigation();
+
             if (Time.unscaledTime < nextRefresh) return;
             nextRefresh = Time.unscaledTime + 0.08f;
             Refresh();
